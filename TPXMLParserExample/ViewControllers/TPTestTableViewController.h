@@ -1,5 +1,5 @@
 //
-//  ViewController.h
+//  TPTestTableViewController.h
 //  TPXMLParserExample
 //
 //  Created by abc on 15/11/17.
@@ -8,8 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController
-
+@interface TPTestTableViewController : UITableViewController
 
 @end
-
