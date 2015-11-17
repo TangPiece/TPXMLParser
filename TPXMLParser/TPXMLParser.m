@@ -113,7 +113,6 @@
     NSMutableArray *tempArray = [NSMutableArray array];
     ///存储属性的个数
     unsigned int propertyCount = 0;
-//    Class class = NSClassFromString(className);
     ///通过运行时获取当前类的属性
     objc_property_t *propertys = class_copyPropertyList(objClass , &propertyCount);
     for (int i = 0 ; i < propertyCount ; i++ ) {

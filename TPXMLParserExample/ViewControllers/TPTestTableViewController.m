@@ -13,7 +13,7 @@
 
 static NSString *const kReuseID = @"Cell";
 
-@interface TPTestTableViewController () <TPXMLParserDelegate>
+@interface TPTestTableViewController ()
 @property (nonatomic , copy) NSArray *allInfos;
 @end
 
@@ -23,7 +23,7 @@ static NSString *const kReuseID = @"Cell";
     [super viewDidLoad];
     [self.tableView registerClass:[TPTestTableViewCell class] forCellReuseIdentifier:kReuseID];
 #warning 调用TPXMLParser进行解析xml
-    //通过url获取数据
+    //使用block方式
     NSURL *url = [[NSBundle mainBundle] URLForResource:@"test" withExtension:@"xml"];
     [TPXMLParser parseXMLWithURL:url objectClass:[TPTestModel class] objectFlag:@"jdt" response:^(NSArray *responseObjects) {
         NSLog(@"response:%@" , responseObjects);
