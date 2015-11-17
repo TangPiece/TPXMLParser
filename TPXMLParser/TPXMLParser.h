@@ -38,7 +38,7 @@ typedef void (^TPXMLParserBlock) (NSArray *responseObjects);
  *
  *  @param url      获取xml的URL，可以是网络url，也可以是文件的url
  *  @param objClass 保存数据的类的Class
- *  @param objFlag  xml文档中表示一个对象的标记
+ *  @param objFlag  xml文档中表示对象的元素
  *  @param delegate 代理
  */
 + (void)parseXMLWithURL:(NSURL *)url objectClass:(Class)objClass objectFlag:(NSString *)objFlag delegate:(id<TPXMLParserDelegate>)delegate;
@@ -48,7 +48,7 @@ typedef void (^TPXMLParserBlock) (NSArray *responseObjects);
  *
  *  @param url      获取xml的URL，可以是网络url，也可以是文件的url
  *  @param objClass 保存数据的类的Class
- *  @param objFlag  xml文档中表示一个对象的标记
+ *  @param objFlag  xml文档中表示表示对象的元素
  *  @param response 回调的block
  */
 + (void)parseXMLWithURL:(NSURL *)url objectClass:(Class)objClass objectFlag:(NSString *)objFlag response:(TPXMLParserBlock)response;

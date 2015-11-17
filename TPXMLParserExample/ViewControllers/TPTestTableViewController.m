@@ -30,7 +30,8 @@ static NSString *const kReuseID = @"Cell";
         self.allInfos = responseObjects;
     }];
     
-    //或者使用代理方法,并实现代理方法
+    //或者使用代理方法
+    //并实现代理方法:- (void)xmlParser:(TPXMLParser *)xmlParser didParsedWithArray:(NSArray *)responseObjects
 //    [TPXMLParser parseXMLWithURL:url objectClass:[TPTestModel class] objectFlag:@"jdt" delegate:self];
 }
 
