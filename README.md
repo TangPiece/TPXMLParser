@@ -1,5 +1,6 @@
 # TPXMLParser
-just one step for parsing xml data
+just one step for parsing xml data!
+
 只需调用一个类方法，即可将xml数据解析到对应的对象中，从此让xml解析和json解析一样简单
 使用概述
 
