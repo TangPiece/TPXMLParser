@@ -29,9 +29,9 @@
 }
 
 - (void)parseXMLWithURL:(NSURL *)url objectClass:(Class)objClass objectFlag:(NSString *)objFlag delegate:(id<TPXMLParserDelegate>)delegate{
-    NSAssert(objClass , @"objectClass不能为空");
-    NSAssert(objFlag , @"objectFlag不能为空");
-    NSAssert(delegate , @"delegate不能为空");
+    NSAssert(objClass , @"TPXMLParser的objectClass不能为空");
+    NSAssert(objFlag , @"TPXMLParser的objectFlag不能为空");
+    NSAssert(delegate , @"TPXMLParser的delegate不能为空");
     self.objFlag = objFlag;
     self.objClass = objClass;
     self.allPropertyNames = [self getAllPropertyNamesWithClass:self.objClass];
@@ -44,9 +44,9 @@
 }
 
 - (void)parseXMLWithURL:(NSURL *)url objectClass:(__unsafe_unretained Class)objClass objectFlag:(NSString *)objFlag response:(TPXMLParserBlock)response{
-    NSAssert(objClass , @"objectClass不能为空");
-    NSAssert(objFlag , @"objectFlag不能为空");
-    NSAssert(response , @"delegate不能为空");
+    NSAssert(objClass , @"TPXMLParser的objectClass不能为空");
+    NSAssert(objFlag , @"TPXMLParser的objectFlag不能为空");
+//    NSAssert(response , @"TPXMLParser的block不能为空");
     self.objFlag = objFlag;
     self.objClass = objClass;
     self.allPropertyNames = [self getAllPropertyNamesWithClass:self.objClass];
