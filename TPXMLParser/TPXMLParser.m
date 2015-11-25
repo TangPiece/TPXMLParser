@@ -9,9 +9,13 @@
 #import "TPXMLParser.h"
 #import <objc/runtime.h>
 
-@interface TPXMLParser () <NSXMLParserDelegate>
+@interface TPXMLParser () <NSXMLParserDelegate>{
+    struct {
+        unsigned int isRespondSelector : 1;
+    } _delegateFlags;
+}
 
-@property (nonatomic , strong) TPXMLParserBlock responseBlock; /**<block*/
+@property (nonatomic , copy) TPXMLParserBlock responseBlock; /**<block*/
 @property (nonatomic , weak) id<TPXMLParserDelegate> delegate; /**<代理*/
 @property (nonatomic , assign) Class objClass;
 @property (nonatomic , copy) NSString *objFlag;
@@ -34,7 +38,7 @@
     NSAssert(delegate , @"TPXMLParser的delegate不能为空");
     self.objFlag = objFlag;
     self.objClass = objClass;
-    self.allPropertyNames = [self getAllPropertyNamesWithClass:self.objClass];
+    self.allPropertyNames = [self tp_getAllPropertyNamesWithClass:self.objClass];
     self.delegate = delegate;
     [self parseXMLWithURL:url];
 }
@@ -49,7 +53,7 @@
 //    NSAssert(response , @"TPXMLParser的block不能为空");
     self.objFlag = objFlag;
     self.objClass = objClass;
-    self.allPropertyNames = [self getAllPropertyNamesWithClass:self.objClass];
+    self.allPropertyNames = [self tp_getAllPropertyNamesWithClass:self.objClass];
     self.responseBlock = response;
     [self parseXMLWithURL:url];
 }
@@ -96,7 +100,7 @@
  *  xml文档解析到最后将解析结果回调
  */
 - (void)parserDidEndDocument:(NSXMLParser *)parser{
-    if ([self.delegate respondsToSelector:@selector(xmlParser:didParsedWithArray:)]) {
+    if (_delegateFlags.isRespondSelector) {
         [self.delegate xmlParser:self didParsedWithArray:[self.allNewsMutableArray copy]];
     }else if (self.responseBlock) {
         self.responseBlock([self.allNewsMutableArray copy]);
@@ -109,7 +113,7 @@
 /**
  * 使用Runtime获取给定类的所有属性
  */
-- (NSArray *)getAllPropertyNamesWithClass:(Class)objClass{
+- (NSArray *)tp_getAllPropertyNamesWithClass:(Class)objClass{
     NSMutableArray *tempArray = [NSMutableArray array];
     ///存储属性的个数
     unsigned int propertyCount = 0;
@@ -121,6 +125,13 @@
         [tempArray addObject:[NSString stringWithUTF8String:propertyName]];
     }
     return tempArray;
+}
+
+#pragma mark - setter方法
+
+- (void)setDelegate:(id<TPXMLParserDelegate>)delegate{
+    _delegate = delegate;
+    _delegateFlags.isRespondSelector = [_delegate respondsToSelector:@selector(xmlParser:didParsedWithArray:)];
 }
 
 #pragma mark - getter方法

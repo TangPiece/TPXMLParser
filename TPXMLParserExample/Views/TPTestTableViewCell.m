@@ -55,7 +55,7 @@
     self.titleLabel.text = _testModel.title;
     self.timeLabel.text = _testModel.date;
     self.sourceLabel.text = _testModel.source;
-    NSString *imageName = _testModel.image;
+    NSString *imageName = [_testModel.image stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     [self.photoView sd_setImageWithURL:[NSURL URLWithString:imageName] placeholderImage:[UIImage imageNamed:@"a"]];
 }
 
