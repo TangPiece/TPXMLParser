@@ -5,13 +5,19 @@ just one step for parsing xml data!
 使用概述
 
     //用block方式
-    [TPXMLParser parseXMLWithURL:url objectClass:[CustomClass class] objectFlag:@"object element in .xml" response:^(NSArray *responseObjects) {
+    [TPXMLParser parseXMLWithURLString:urlString objectClass:[CustomClass class] objectFlag:@"object element in .xml" response:^(NSArray *responseObjects) {
         //在这里处理解析好的数据，数据以对象的形式保存在数组中
     }];
     
     //或者使用代理方法
     //并实现代理方法:- (void)xmlParser:(TPXMLParser *)xmlParser didParsedWithArray:(NSArray *)responseObjects
-    [TPXMLParser parseXMLWithURL:url objectClass:[CustomClass class] objectFlag:@"object element in .xml" delegate:self];
+    [TPXMLParser parseXMLWithURLString:urlString objectClass:[CustomClass class] objectFlag:@"object element in .xml" delegate:self];
+
+获取某个标签的值
+
+    [TPXMLParser tagValueWithURLString:urlString tag:@"tag" response:^(NSArray *responseObjects) {
+        //在xml中指定标签的所有值都保存在数组中
+    }];
 
 提醒
 
