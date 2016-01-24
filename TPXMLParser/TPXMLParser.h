@@ -41,7 +41,7 @@ typedef void (^TPXMLParserBlock) (NSArray *responseObjects);
  *  @param objFlag  xml文档中表示对象的元素
  *  @param delegate 代理
  */
-+ (void)parseXMLWithURL:(NSURL *)url objectClass:(Class)objClass objectFlag:(NSString *)objFlag delegate:(id<TPXMLParserDelegate>)delegate;
++ (void)parseXMLWithURLString:(NSString *)urlString objectClass:(Class)objClass objectFlag:(NSString *)objFlag delegate:(id<TPXMLParserDelegate>)delegate;
 
 /**
  *  用block回调接收解析结果
@@ -51,5 +51,9 @@ typedef void (^TPXMLParserBlock) (NSArray *responseObjects);
  *  @param objFlag  xml文档中表示表示对象的元素
  *  @param response 回调的block
  */
-+ (void)parseXMLWithURL:(NSURL *)url objectClass:(Class)objClass objectFlag:(NSString *)objFlag response:(TPXMLParserBlock)response;
++ (void)parseXMLWithURLString:(NSString *)urlString objectClass:(Class)objClass objectFlag:(NSString *)objFlag response:(TPXMLParserBlock)response;
+
+//获取某个标签的所有值
++ (void)tagValueWithURLString:(NSString *)urlString tag:(NSString *)tag response:(TPXMLParserBlock)response;
+
 @end

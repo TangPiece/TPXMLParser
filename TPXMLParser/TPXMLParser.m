@@ -8,6 +8,7 @@
 
 #import "TPXMLParser.h"
 #import <objc/runtime.h>
+#import "TPRequestManager.h"
 
 @interface TPXMLParser () <NSXMLParserDelegate>{
     struct {
@@ -15,24 +16,43 @@
     } _delegateFlags;
 }
 
+//解析xml数据到对象中
 @property (nonatomic , copy) TPXMLParserBlock responseBlock; /**<block*/
 @property (nonatomic , weak) id<TPXMLParserDelegate> delegate; /**<代理*/
 @property (nonatomic , assign) Class objClass;
 @property (nonatomic , copy) NSString *objFlag;
 
-@property (nonatomic , copy) NSMutableArray *allNewsMutableArray;
+@property (nonatomic , copy) NSMutableArray *allObjsMutableArray;
+@property (nonatomic , assign) dispatch_queue_t dispatchQueue;
 @property (nonatomic , copy) NSArray *allPropertyNames;
 @property (nonatomic , copy) NSString *tempPropertyName;
 @property (nonatomic , strong) id tempNews;
+
+//获取某个标签的值
+@property (nonatomic , copy) NSString *tag;
+@property (nonatomic , assign) BOOL findTag;
+//@property (nonatomic , copy) NSMutableArray *allTagValuesArray;
 @end
 
 @implementation TPXMLParser
 
-+ (void)parseXMLWithURL:(NSURL *)url objectClass:(Class)objClass objectFlag:(NSString *)objFlag delegate:(id<TPXMLParserDelegate>)delegate{
-    [[self alloc] parseXMLWithURL:url];
+#pragma mark - life cycle
+
++ (void)parseXMLWithURLString:(NSString *)urlString objectClass:(Class)objClass objectFlag:(NSString *)objFlag delegate:(id<TPXMLParserDelegate>)delegate{
+    [[self alloc] parseXMLWithURLString:urlString objectClass:objClass objectFlag:objFlag delegate:delegate];
 }
 
-- (void)parseXMLWithURL:(NSURL *)url objectClass:(Class)objClass objectFlag:(NSString *)objFlag delegate:(id<TPXMLParserDelegate>)delegate{
++ (void)parseXMLWithURLString:(NSString *)urlString objectClass:(__unsafe_unretained Class)objClass objectFlag:(NSString *)objFlag response:(TPXMLParserBlock)response{
+    [[self alloc] parseXMLWithURLString:urlString objectClass:objClass objectFlag:objFlag response:[response copy]];
+}
+
++ (void)tagValueWithURLString:(NSString *)urlString tag:(NSString *)tag response:(TPXMLParserBlock)response{
+    [[self alloc] tagValueWithURLString:urlString tag:tag response:[response copy]];
+}
+
+#pragma mark - parser object
+
+- (void)parseXMLWithURLString:(NSString *)urlString objectClass:(Class)objClass objectFlag:(NSString *)objFlag delegate:(id<TPXMLParserDelegate>)delegate{
     NSAssert(objClass , @"TPXMLParser的objectClass不能为空");
     NSAssert(objFlag , @"TPXMLParser的objectFlag不能为空");
     NSAssert(delegate , @"TPXMLParser的delegate不能为空");
@@ -40,14 +60,10 @@
     self.objClass = objClass;
     self.allPropertyNames = [self tp_getAllPropertyNamesWithClass:self.objClass];
     self.delegate = delegate;
-    [self parseXMLWithURL:url];
+    [self parseXMLWithURLString:urlString];
 }
 
-+ (void)parseXMLWithURL:(NSURL *)url objectClass:(__unsafe_unretained Class)objClass objectFlag:(NSString *)objFlag response:(TPXMLParserBlock)response{
-    [[self alloc] parseXMLWithURL:url objectClass:objClass objectFlag:objFlag response:response];
-}
-
-- (void)parseXMLWithURL:(NSURL *)url objectClass:(__unsafe_unretained Class)objClass objectFlag:(NSString *)objFlag response:(TPXMLParserBlock)response{
+- (void)parseXMLWithURLString:(NSString *)urlString objectClass:(__unsafe_unretained Class)objClass objectFlag:(NSString *)objFlag response:(TPXMLParserBlock)response{
     NSAssert(objClass , @"TPXMLParser的objectClass不能为空");
     NSAssert(objFlag , @"TPXMLParser的objectFlag不能为空");
 //    NSAssert(response , @"TPXMLParser的block不能为空");
@@ -55,13 +71,35 @@
     self.objClass = objClass;
     self.allPropertyNames = [self tp_getAllPropertyNamesWithClass:self.objClass];
     self.responseBlock = response;
-    [self parseXMLWithURL:url];
+    [self parseXMLWithURLString:urlString];
 }
 
-- (void)parseXMLWithURL:(NSURL *)url{
-    NSXMLParser *xmlParser = [[NSXMLParser alloc] initWithContentsOfURL:url];
-    xmlParser.delegate = self;
-    [xmlParser parse];
+#pragma mark - get tag value
+
+- (void)tagValueWithURLString:(NSString *)urlString tag:(NSString *)tag response:(TPXMLParserBlock)response{
+    NSAssert(tag , @"TPXMLParser的tag不能为空");
+    self.tag = tag;
+    self.findTag = NO;
+    self.responseBlock = response;
+    [self parseXMLWithURLString:urlString];
+}
+
+- (void)parseXMLWithURLString:(NSString *)urlString{
+//    //并行队列
+//    dispatch_queue_t globalQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
+//    dispatch_async(globalQueue, ^{
+//        NSXMLParser *xmlParser = [[NSXMLParser alloc] initWithContentsOfURL:[NSURL URLWithString:urlString]];
+//        xmlParser.delegate = self;
+//        [xmlParser parse];
+//    });
+    
+    [TPRequestManager url:urlString params:nil isPost:NO success:^(id responseObject) {
+        NSXMLParser *xmlParser = (NSXMLParser *)responseObject;
+        xmlParser.delegate = self;
+        [xmlParser parse];
+    } fail:^(NSError *error) {
+        NSLog(@"TPXMLParser error:%@" , error);
+    }];
 }
 
 #pragma mark - NSXMLParserDelegate
@@ -73,12 +111,22 @@
     }else if ([self.allPropertyNames containsObject:elementName]) { //出现属性名
         self.tempPropertyName = elementName;
     }
+    
+    //发现某个标签
+    if (self.tag && [elementName isEqualToString:self.tag]) {
+        self.findTag = YES;
+    }
 }
 
 - (void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string{
     if (string.length != 1 && self.tempPropertyName) {
         //使用KVC对数组进行赋值
         [self.tempNews setValue:string forKeyPath:self.tempPropertyName];
+    }
+    
+    //获取某个标签值
+    if (self.findTag) {
+        [self.allObjsMutableArray addObject:string];
     }
 }
 
@@ -87,12 +135,17 @@
      //出现类名
     if ([elementName isEqualToString:self.objFlag]) {
         //保存一个对象的完整信息
-        [self.allNewsMutableArray addObject:self.tempNews];
+        [self.allObjsMutableArray addObject:self.tempNews];
         //将临时对象置空
         self.tempNews = nil;
     }else if ([self.allPropertyNames containsObject:elementName]) {
         //将临时属性名置空
         self.tempPropertyName = nil;
+    }
+    
+    //标签结束
+    if (self.tag && [elementName isEqualToString:self.tag]) {
+        self.findTag = NO;
     }
 }
 
@@ -100,12 +153,13 @@
  *  xml文档解析到最后将解析结果回调
  */
 - (void)parserDidEndDocument:(NSXMLParser *)parser{
+    //使用结构体优化判断
     if (_delegateFlags.isRespondSelector) {
-        [self.delegate xmlParser:self didParsedWithArray:[self.allNewsMutableArray copy]];
+        [self.delegate xmlParser:self didParsedWithArray:[self.allObjsMutableArray copy]];
     }else if (self.responseBlock) {
-        self.responseBlock([self.allNewsMutableArray copy]);
+        self.responseBlock([self.allObjsMutableArray copy]);
     }
-    self.allNewsMutableArray = nil;
+    self.allObjsMutableArray = nil;
 }
 
 #pragma mark - pravite methods
@@ -136,11 +190,18 @@
 
 #pragma mark - getter方法
 
-- (NSMutableArray *)allNewsMutableArray{
-    if (!_allNewsMutableArray) {
-        _allNewsMutableArray = [NSMutableArray array];
+- (NSMutableArray *)allObjsMutableArray{
+    if (!_allObjsMutableArray) {
+        _allObjsMutableArray = [NSMutableArray array];
     }
-    return _allNewsMutableArray;
+    return _allObjsMutableArray;
+}
+
+- (dispatch_queue_t)dispatchQueue{
+    if (!_dispatchQueue) {
+//        _dispatchQueue =  dispatch_get_global_queue(@"global", 1);
+    }
+    return _dispatchQueue;
 }
 
 @end
